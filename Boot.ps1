@@ -1,7 +1,7 @@
 param(
     $GitDownloadUrl = "https://github.com/msysgit/msysgit/releases/download/Git-1.9.5-preview20141217/Git-1.9.5-preview20141217.exe",
     $GitDownloadHash = "D7E78DA2251A35ACD14A932280689C57FF9499A474A448AE86E6C43B882692DD",
-    $BakeryRepoUrl = "https://github.com/anurse/Bakery",
+    $AcqyreRepoUrl = "https://github.com/acqyre/acq",
     $Library = "$env:SYSTEMDRIVE\Library")
 
 function InstallGit() {
@@ -88,19 +88,30 @@ if((Get-Command -ErrorAction SilentlyContinue git)) {
     InstallGit
 }
 
-$Bakery = Join-Path $Library Bakery
-if((Test-Path "$Bakery") -and (Test-Path "$Bakery\.git")) {
+$Acq = Join-Path $Library Acq
+if((Test-Path "$Acq") -and (Test-Path "$Acq\.git")) {
+    # Read the acq branch to use from config if present
+    $branch = "release"
+    $branchfile = Join-Path $Library ".acqbranch"
+    if(Test-Path $branchfile) {
+        $branch = (cat $branchfile).Trim()
+    }
+
     # Update it
-    pushd $Bakery | Out-Null
-    git checkout master
-    git pull origin master
+    pushd $Acq | Out-Null
+    git checkout $branch
+    git pull origin $branch
     popd | Out-Null
 } else {
-    # Clone the Bakery repo
+    # Clone the Acq repo 'release' branch
     pushd $Library | Out-Null
-    git clone $BakeryRepoUrl Bakery
+    git clone -b release $AcqyreRepoUrl Acq
     popd | Out-Null
+
+    # Write the chosen acq branch to configuration in the library
+    "release" | Out-File (Join-Path $Library ".acqbranch") -Encoding ascii
 }
 
-# Run the Bakery setup script
-& $Bakery\Setup.ps1
+# Load and install acqyre
+Import-Module $Acq\Acqyre.psd1
+acq setup
