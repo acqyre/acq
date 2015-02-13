@@ -50,12 +50,14 @@ function on() {
 
 function bin() {
     param(
-        [Parameter(Mandatory=$true, Position=0)][string]$Path)
+        [Parameter(Mandatory=$true, Position=0)][string]$Path,
+        [Parameter()][switch]$Copy)
     if(!$_CurrentEvent) { throw "This command must be used in an 'on [event]' block" }
 
     $_CurrentEvent.Actions += @(New-Object PSCustomObject -Property @{
         "Type"="bin"
         "Path"=$Path
+        "Copy"=$Copy.IsPresent
     })
 }
 
