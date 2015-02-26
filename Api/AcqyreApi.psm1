@@ -12,9 +12,18 @@ function info() {
 
 function url() {
     param(
-        [Parameter(Mandatory=$true, Position=0)][string]$Url)
+        [Parameter(Mandatory=$true, Position=0)][string]$Url,
+        [Parameter(Mandatory=$false)][string]$Hash)
     
-    Add-Member "Url" $Url -InputObject $_CurrentSpec -Force
+    $obj = New-Object PSCustomObject -Property @{
+        "Url" = $Url
+        "Hash" = $Hash
+    }
+
+    if(!$_CurrentSpec.Packages) {
+        Add-Member "Packages" @() -InputObject $_CurrentSpec -Force
+    }
+    $_CurrentSpec.Packages += $obj
 }
 
 function hash() {
@@ -49,16 +58,31 @@ function on() {
 }
 
 function bin() {
+    [CmdletBinding(DefaultParameterSetName="Path")]
     param(
-        [Parameter(Mandatory=$true, Position=0)][string]$Path,
-        [Parameter()][switch]$Copy)
+        [Parameter(Mandatory=$true, Position=0, ParameterSetName="Path")][string]$Path,
+        [Parameter(Mandatory=$true, ParameterSetName="Content")][string]$Name,
+        [Parameter(Mandatory=$true, ParameterSetName="Content")][string]$Content,
+        [Parameter(ParameterSetName="Path")][switch]$Copy,
+        [Parameter(ParameterSetName="Path")][switch]$UseStart)
     if(!$_CurrentEvent) { throw "This command must be used in an 'on [event]' block" }
 
-    $_CurrentEvent.Actions += @(New-Object PSCustomObject -Property @{
-        "Type"="bin"
-        "Path"=$Path
-        "Copy"=$Copy.IsPresent
-    })
+    if($PSCmdlet.ParameterSetName -eq "Content") {
+        $_CurrentEvent.Actions += @(New-Object PSCustomObject -Property @{
+            "Type"="bin"
+            "Name"=$Name
+            "Content"=$Content
+            "Copy"=$Copy.IsPresent
+            "UseStart"=$UseStart.IsPresent
+        })
+    } else {
+        $_CurrentEvent.Actions += @(New-Object PSCustomObject -Property @{
+            "Type"="bin"
+            "Path"=$Path
+            "Copy"=$Copy.IsPresent
+            "UseStart"=$UseStart.IsPresent
+        })
+    }
 }
 
 function startmenu() {
