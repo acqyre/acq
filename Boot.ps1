@@ -1,7 +1,7 @@
 param(
     $GitDownloadUrl = "https://github.com/msysgit/msysgit/releases/download/Git-1.9.5-preview20141217/Git-1.9.5-preview20141217.exe",
     $GitDownloadHash = "D7E78DA2251A35ACD14A932280689C57FF9499A474A448AE86E6C43B882692DD",
-    $AcqyreRepoUrl = "https://github.com/acqyre/acq",
+    $AcqyreRepoUrl = "https://github.com/acqyre/acqyre",
     $Library = "$env:SYSTEMDRIVE\Library")
 
 function InstallGit() {
