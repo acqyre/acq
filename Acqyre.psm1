@@ -56,6 +56,11 @@ function _exec {
     $p.ExitCode
 }
 
+function _overlaycontents($src, $dest) {
+    Copy-Item "$src/*" -Destination $dest -Force -Recurse
+    Remove-Item "$src" -Force -Recurse
+}
+
 function _unpack_7z($package) {
     if(!(Get-Command 7z -ErrorAction SilentlyContinue)) {
         throw "7zip not installed!"
@@ -66,8 +71,7 @@ function _unpack_7z($package) {
 
     7z x $package -o"$contents"
     
-    mv "$contents/*" $target -Force
-    rm $contents -Recurse -Force
+    _overlaycontents $contents $target
 }
 
 function _unpack_msi($package) {
@@ -82,8 +86,7 @@ function _unpack_msi($package) {
         throw "Cannot unpack MSI. The Windows Installer Service is busy with another installation..."
     }
 
-    mv "$contents/*" $target -Force
-    rm $contents -Recurse -Force
+    _overlaycontents $contents $target
 }
 
 function _unpack_zip($package) {
@@ -97,11 +100,12 @@ function _unpack_zip($package) {
     }
 
     [System.IO.Compression.ZipFile]::ExtractToDirectory($package, $contents)
-    mv "$contents/*" $target -Force
-    rm $contents -Recurse -Force
+    
+    _overlaycontents $contents $target
 }
 
 function _unpack($package) {
+    Write-Host "Unpacking $package ..."
     switch([IO.Path]::GetExtension($package)) {
         ".msi" { _unpack_msi $package }
         ".zip" { _unpack_zip $package }
@@ -110,8 +114,6 @@ function _unpack($package) {
 }
 
 function _apply_bin($action) {
-    $binaryName = [IO.Path]::GetFileNameWithoutExtension($action.Path)
-
     if($action.Copy) {
         # Locate the file
         $packageRoot = Join-Path $LibraryPaths.Packages $_CurrentPackageRelativeDir
@@ -119,17 +121,33 @@ function _apply_bin($action) {
 
         # Just copy the file
         Copy-Item $file $LibraryPaths.Bin
-    }
-
-    # Place a link file in the library bin
-    $linkFile = @"
-@%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path) %*
+    } else {
+        # Place a link file in the library bin
+        $linkFile = @"
+@"%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path)" %*
 "@
-    $linkName = $binaryName + ".cmd"
-    
-    $linkFile | Out-File -FilePath (Join-Path $LibraryPaths.Bin $linkName) -Encoding ascii
+        if($action.Content) {
+            $linkFile = $action.Content
+        } elseif($action.UseStart) {
+            $linkFile = @"
+@start "launcher" "%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path)" %*
+"@  
+        }
+        $binaryName = [IO.Path]::GetFileNameWithoutExtension($action.Path)
+        if($action.Name) {
+            $binaryName = $action.Name
+        }
 
-    Write-Verbose "Placed bin-link $linkName"
+        $linkName = $binaryName + ".cmd"
+        
+        $linkPath = Join-Path $LibraryPaths.Bin $linkName
+        if(Test-Path $linkPath) {
+            Remove-Item $linkPath
+        }
+        $linkFile | Out-File -FilePath $linkPath -Encoding ascii
+
+        Write-Verbose "Placed bin-link $linkName"
+    }
 }
 
 function _apply_startmenu($action) {
@@ -152,8 +170,8 @@ function _runspec($spec, [switch]$Force) {
         if(!$spec.Version) {
             throw "Invalid spec. Missing version"
         }
-        if(!$spec.Url) {
-            throw "Invalid spec. Missing URL"
+        if(!$spec.Packages -or ($spec.Packages.Length -eq 0)) {
+            throw "Invalid spec. Missing Packages"
         }
 
         Write-Verbose "Running spec: $($spec.Name)"
@@ -172,27 +190,32 @@ function _runspec($spec, [switch]$Force) {
         }
         mkdir $packageDir | Out-Null
 
-        # Fetch the URL
-        $name = ([uri]$spec.Url).Segments[-1]
-        if(!$name) {
-            throw "Unable to detect file name for url $url"
-        }
-        $package = Join-Path $packageDir $name
-        try {
-            _fetchurl $package $spec.Url
-        } catch {
-            throw $_
-        }
-
-        if($spec.Hash) {
-            $actualHash = Get-FileHash -Algorithm SHA256 $package
-            if($actualHash.Hash -ne $spec.Hash) {
-                throw "Actual package hash '$actualHash' did not match expected value"
+        # Fetch the Packages
+        $spec.Packages | ForEach-Object {
+            $name = ([uri]$_.Url).Segments[-1]
+            if(!$name) {
+                throw "Unable to detect file name for url $url"
             }
-        }
+            $package = Join-Path $packageDir $name
+            try {
+                _fetchurl $package $_.Url
+            } catch {
+                throw $_
+            }
 
-        # Unpack the package
-        _unpack $package
+            $actualHash = Get-FileHash -Algorithm SHA256 $package
+            if($_.Hash) {
+                if($actualHash.Hash -ne $_.Hash) {
+                    throw "Actual package hash '$($actualHash.Hash)' did not match expected value"
+                }
+            } else {
+                Write-Warning "Package '$name' does not have a recorded hash. One should be added to the formula!"
+                Write-Warning "The hash of this download is: $($actualHash.Hash)"
+            }
+
+            # Unpack the package
+            _unpack $package
+        }
 
         # Run actions
         $installEvent = $spec.Events["install"]
