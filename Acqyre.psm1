@@ -292,6 +292,17 @@ function acq-about {
     $spec
 }
 
+function acq-setup {
+    $script = @"
+Import-Module $PSScriptRoot\..\Acq\Acqyre.psd1
+acq @args
+Remove-Module Acqyre
+"@
+    $script | Out-File -Encoding Ascii -FilePath (Join-Path $LibraryPaths.Bin "acq.ps1")
+
+    "@powershell -NoLogo -File %~dp0acq.ps1 %*" | Out-File -Encoding Ascii -FilePath (Join-Path $LibraryPaths.Bin "acq.cmd")
+}
+
 function acq-install {
     param(
         [Parameter(Mandatory=$true)][string]$Recipe,

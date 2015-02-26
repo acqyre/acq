@@ -115,3 +115,5 @@ if((Test-Path "$Acq") -and (Test-Path "$Acq\.git")) {
 # Load and install acqyre
 Import-Module $Acq\Acqyre.psd1
 acq setup
+acq subscribe acqyre/core
+Remove-Module Acqyre
