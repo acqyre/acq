@@ -89,9 +89,9 @@ if((Get-Command -ErrorAction SilentlyContinue git)) {
 }
 
 $Acq = Join-Path $Library Acq
+$branch = "master"
 if((Test-Path "$Acq") -and (Test-Path "$Acq\.git")) {
     # Read the acq branch to use from config if present
-    $branch = "release"
     $branchfile = Join-Path $Library ".acqbranch"
     if(Test-Path $branchfile) {
         $branch = (cat $branchfile).Trim()
@@ -109,7 +109,7 @@ if((Test-Path "$Acq") -and (Test-Path "$Acq\.git")) {
     popd | Out-Null
 
     # Write the chosen acq branch to configuration in the library
-    "release" | Out-File (Join-Path $Library ".acqbranch") -Encoding ascii
+    $branch | Out-File (Join-Path $Library ".acqbranch") -Encoding ascii
 }
 
 # Load and install acqyre
