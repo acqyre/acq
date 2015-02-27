@@ -98,7 +98,7 @@ function startmenu() {
     })
 }
 
-function Recipe {
+function formula {
     param(
         [Parameter(Mandatory=$true, Position=0)][string]$Name,
         [Parameter(Mandatory=$true, Position=1)][scriptblock]$Body)
