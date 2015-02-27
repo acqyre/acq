@@ -1,6 +1,6 @@
 param(
-    [Parameter(Mandatory=$true)][string]$Recipe,
+    [Parameter(Mandatory=$true)][string]$Formula,
     [Parameter()][switch]$Force)
    
-$spec = _loadspec $Recipe
-_runspec $spec -Force:$Force
+$spec = Get-Formula $Formula
+Invoke-Formula $spec -Force:$Force

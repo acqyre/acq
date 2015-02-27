@@ -1,6 +1,6 @@
 param(
-    [Parameter(Mandatory=$true)][string]$Recipe)
+    [Parameter(Mandatory=$true)][string]$Name)
    
-$spec = _loadspec $Recipe
+$spec = Get-Formula $Name
 
 $spec
