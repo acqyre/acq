@@ -6,7 +6,7 @@ function Get-Formula($name) {
     }
 
     # Load the Api Module
-    Import-Module "$PSScriptRoot\Api\AcqyreApi.psm1"
+    Import-Module "$($LibraryPaths.Acq)\Api\AcqyreApi.psm1"
 
     # Execute the script
     try {
@@ -17,7 +17,7 @@ function Get-Formula($name) {
     }
 
     if(!$spec) {
-        throw "Recipe did not return a spec! Make sure it begins with the 'Recipe NAME { }' block."
+        throw "Formula did not return a spec! Make sure it begins with the 'formula NAME { }' block."
     }
 
     $spec
