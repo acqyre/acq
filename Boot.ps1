@@ -105,7 +105,7 @@ if((Test-Path "$Acq") -and (Test-Path "$Acq\.git")) {
 } else {
     # Clone the Acq repo 'release' branch
     pushd $Library | Out-Null
-    git clone -b release $AcqyreRepoUrl Acq
+    git clone -b $branch $AcqyreRepoUrl Acq
     popd | Out-Null
 
     # Write the chosen acq branch to configuration in the library
