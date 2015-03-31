@@ -1,3 +1,7 @@
+if(!(Test-Path $LibraryPaths.Bin)) {
+    New-Item -Type Directory $LibraryPaths.Bin | Out-Null
+}
+
 $script = @"
 Import-Module $($LibraryPaths.Root)\Acq\Acqyre.psd1
 try {
