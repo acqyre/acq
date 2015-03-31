@@ -23,3 +23,18 @@ $userPath = Add-Path "%ACQYRE_LIBRARY%\Bin" $userPath
 
 $env:PATH = Add-Path "$env:ACQYRE_LIBRARY\Bin" $env:PATH
 $env:ACQYRE_LIBRARY = $LibraryPaths.Root
+
+# Install mandatory formulae
+acq install 7zip
+acq install git
+
+# Subscribe to core formulae set
+acq subscribe acqyre/core
+
+# Now bind the Acqyre code to the git repo
+pushd $LibraryPaths.Acq
+git init
+git remote set-url origin "https://github.com/acqyre/acqyre"
+git fetch origin master:master --update-head-ok
+git checkout -f master
+popd 
