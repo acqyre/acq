@@ -3,7 +3,7 @@ if(!(Test-Path $LibraryPaths.Bin)) {
 }
 
 $script = @"
-Import-Module $($LibraryPaths.Root)\Acq\Acqyre.psd1
+Import-Module `$PSScriptRoot\..\Acq\Acqyre.psd1
 try {
     acq @args
 } finally {
