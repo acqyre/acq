@@ -2,7 +2,11 @@ function Get-Formula($name) {
     # Locate the recipe
     $r = (dir -rec -fil "$name.ps1" $LibraryPaths.Collections | select -first 1)
     if(!$r) {
-        throw "No such formula found: '$name'"
+        # Try again in the built-in set
+        $r = (dir -rec -fil "$name.ps1" (Join-Path $LibraryPaths.Acq "Formulae") | select -first 1)
+        if(!$r) {
+            throw "No such formula found: '$name'"
+        }
     }
 
     # Load the Api Module
