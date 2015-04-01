@@ -16,7 +16,7 @@ $script | Out-File -Encoding Ascii -FilePath (Join-Path $LibraryPaths.Bin "acq.p
 
 # Set up environment variables
 $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-$userPath = Add-Path "%ACQYRE_LIBRARY%\Bin" $userPath
+$userPath = Add-Path "$($LibraryPaths.Bin)" $userPath
 [Environment]::SetEnvironmentVariable("PATH", $userPath, "User")
 
 [Environment]::SetEnvironmentVariable("ACQYRE_LIBRARY", $LibraryPaths.Root, "User")
