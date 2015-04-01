@@ -11,13 +11,30 @@ $LibraryPaths = New-Object PSObject -Property @{
 }
 Export-ModuleMember -Variable LibraryPaths
 
+# Set up Acqyre Plugin Management
+$AcqyrePlugins = @{} 
+function Get-AcqyrePlugin($Type, $Name) {
+    if($AcqyrePlugins[$Type]) {
+        $AcqyrePlugins[$Type][$Name]
+    }
+}
+
+function Plugin($Type, $Name, $Value) {
+    $dict = $AcqyrePlugins[$Type]
+    if(!$dict) {
+        $dict = @{}
+        $AcqyrePlugins[$Type] = $dict
+    }
+    $dict[$Name] = $Value
+}
+
 # Load functions
 dir $PSScriptRoot\Functions\*.ps1 | ForEach-Object {
     . $_.FullName
 }
 
 function acq {
-    _dispatch_subcommand "acq" @args
+    Invoke-Subcommand "acq" @args
 }
 
 Export-ModuleMember -Function "acq"

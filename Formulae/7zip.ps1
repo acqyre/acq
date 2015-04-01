@@ -4,7 +4,6 @@ formula 7zip {
 
     on install {
         bin "Files\7-zip\7z.exe"
-        startmenu "Files\7-zip\7zFM.exe" "7-zip File Manager"
     }
 }
 

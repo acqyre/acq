@@ -47,12 +47,12 @@ function Invoke-Formula($formula, [switch]$Force) {
         if(Test-Path $packageDir) {
             if($Force) {
                 Write-Verbose "Cleaning target..."
-                rm -rec -for $packageDir
+                Remove-Item -rec -for $packageDir
             } else {
                 throw "Destination already exists '$packageDir', use -Force to force install."
             }
         }
-        mkdir $packageDir | Out-Null
+        New-Item -Type Directory $packageDir | Out-Null
 
         # Fetch the Packages
         $formula.Packages | ForEach-Object {
@@ -78,14 +78,14 @@ function Invoke-Formula($formula, [switch]$Force) {
             }
 
             # Unpack the package
-            _unpack $package
+            Unpack-Package $package
         }
 
         # Run actions
         $installEvent = $formula.Events["install"]
         if($installEvent -and $installEvent.Actions -and ($installEvent.Actions.Length -gt 0)) {
             $installEvent.Actions | ForEach-Object {
-                _apply $_
+                Invoke-Action $_
             }
         }
 
