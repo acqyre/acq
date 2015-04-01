@@ -12,7 +12,6 @@ Plugin -Type "Action" -Name "bin" @{
         } else {
             # Place a link file in the library bin
             $linkFile = @"
-REM !Package:$_CurrentPackageRelativeDir!
 @"%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path)" %*
 "@
             if($action.Content) {
@@ -20,7 +19,6 @@ REM !Package:$_CurrentPackageRelativeDir!
                 $linkFile = $action.Content
             } elseif($action.UseStart) {
                 $linkFile = @"
-REM !Package:$_CurrentPackageRelativeDir!
 @start "launcher" "%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path)" %*
 "@  
             }
