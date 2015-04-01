@@ -89,6 +89,9 @@ function Invoke-Formula($formula, [switch]$Force) {
             }
         }
 
+        # Serialize the formula and save it
+        $formula | Export-CliXml (Join-Path $packageDir ".acqformula.xml")
+
         del variable:\_CurrentPackageRelativeDir
     }
     catch {
