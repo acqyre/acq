@@ -21,7 +21,7 @@ $userPath = Add-Path "$($LibraryPaths.Bin)" $userPath
 
 [Environment]::SetEnvironmentVariable("ACQYRE_LIBRARY", $LibraryPaths.Root, "User")
 
-$env:PATH = Add-Path "$env:ACQYRE_LIBRARY\Bin" $env:PATH
+$env:PATH = Add-Path "$($LibraryPaths.Bin)" $env:PATH
 $env:ACQYRE_LIBRARY = $LibraryPaths.Root
 
 # Install mandatory formulae
