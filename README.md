@@ -2,7 +2,9 @@
 Tool to fetch apps on Windows.
 
 ## Getting started
-Run the following from a PowerShell window:
+
+0. `Set-ExecutionPolicy RemoteSigned` unless you've alrady done that
+1. Run the following from a PowerShell window:
 
 ```powershell
 &([scriptblock]::Create((curl https://raw.githubusercontent.com/acqyre/acqyre/master/Boot.ps1 | select -exp Content)))
