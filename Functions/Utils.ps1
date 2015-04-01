@@ -98,21 +98,27 @@ function _apply_bin($action) {
     } else {
         # Place a link file in the library bin
         $linkFile = @"
+REM !Package:$_CurrentPackageRelativeDir!
 @"%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path)" %*
 "@
         if($action.Content) {
+            $linkName = $action.Name
             $linkFile = $action.Content
         } elseif($action.UseStart) {
             $linkFile = @"
+REM !Package:$_CurrentPackageRelativeDir!
 @start "launcher" "%~dp0..\Packages\$_CurrentPackageRelativeDir\$($action.Path)" %*
 "@  
         }
-        $binaryName = [IO.Path]::GetFileNameWithoutExtension($action.Path)
-        if($action.Name) {
-            $binaryName = $action.Name
-        }
+        
+        if(!$linkName) {
+            $binaryName = [IO.Path]::GetFileNameWithoutExtension($action.Path)
+            if($action.Name) {
+                $binaryName = $action.Name
+            }
 
-        $linkName = $binaryName + ".cmd"
+            $linkName = $binaryName + ".cmd"
+        }
         
         $linkPath = Join-Path $LibraryPaths.Bin $linkName
         if(Test-Path $linkPath) {
