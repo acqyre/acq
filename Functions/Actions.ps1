@@ -8,6 +8,7 @@ Plugin -Type "Action" -Name "bin" @{
             $file = Join-Path $packageRoot $action.Path
 
             # Just copy the file
+            Write-InstallAction " copying binary $($action.Path)"
             Copy-Item $file $LibraryPaths.Bin
         } else {
             # Place a link file in the library bin
@@ -36,9 +37,8 @@ Plugin -Type "Action" -Name "bin" @{
             if(Test-Path $linkPath) {
                 Remove-Item $linkPath
             }
+            Write-InstallAction " placing binary link to $($action.Path)"
             $linkFile | Out-File -FilePath $linkPath -Encoding ascii
-
-            Write-Verbose "Placed bin-link $linkName"
         }
     }
     "Uninstall"={throw "can't uninstall yet!"}

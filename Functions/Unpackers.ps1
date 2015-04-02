@@ -13,6 +13,7 @@ Plugin -Type "Unpacker" -Name "7z" {
     $target = Convert-Path (Split-Path -Parent $package)
     $contents = Join-Path $target "ExtractTemp"
 
+    Write-InstallAction " unpacking 7-zip archive..."
     7z x $package -o"$contents"
     
     _overlaycontents $contents $target
@@ -26,6 +27,7 @@ Plugin -Type "Unpacker" -Name "msi" {
 
     $logFile = Join-Path $target "bakery-unpack-msi.log"
 
+    Write-InstallAction " unpacking msi contents..."
     $exitCode = _exec msiexec /a (Convert-Path $package) /qn /log "$logFile" "INSTALLDIR=$contents" "TARGETDIR=$contents" "ALLUSERS=2" "MSIINSTALLPERUSER=1"
 
     if($exitCode -eq 1618) {
@@ -47,6 +49,7 @@ Plugin -Type "Unpacker" -Name "zip" {
         throw "Missing required assembly: System.IO.Compression.FileSystem"
     }
 
+    Write-InstallAction " unpacking zip archive..."
     [System.IO.Compression.ZipFile]::ExtractToDirectory($package, $contents)
     
     _overlaycontents $contents $target

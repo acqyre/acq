@@ -14,8 +14,11 @@ function Add-Path {
     }
 }
 
+function Write-InstallAction($msg) {
+    Write-Host -ForegroundColor DarkGray $msg
+}
+
 function _fetchurl($destination, $url) {
-    Write-Host "Downloading $url ..."
     Invoke-WebRequest -Uri $url -OutFile $destination
 }
 

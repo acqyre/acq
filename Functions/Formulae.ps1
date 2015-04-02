@@ -26,6 +26,12 @@ function Get-Formula($name) {
 
     $spec
 }
+
+function Get-PackageRoot($name) {
+    $ver = (dir (Join-Path $LibraryPaths.Packages $name) | select -first 1).Name
+    Join-Path $name $ver
+}
+
 function Invoke-Formula($formula, [switch]$Force) {
     try {
         if(!$formula.Name) {
@@ -43,56 +49,27 @@ function Invoke-Formula($formula, [switch]$Force) {
         # Assign the package directory
         $packageDir = Join-Path (Join-Path $LibraryPaths.Packages $formula.Name) $formula.Version
         Write-Verbose "Target directory: $packageDir"
-        $global:_CurrentPackageRelativeDir = Join-Path $formula.Name $formula.Version
-        if(Test-Path $packageDir) {
-            if($Force) {
-                Write-Verbose "Cleaning target..."
-                Remove-Item -rec -for $packageDir
-            } else {
-                throw "Destination already exists '$packageDir', use -Force to force install."
-            }
-        }
-        New-Item -Type Directory $packageDir | Out-Null
-
-        # Fetch the Packages
-        $formula.Packages | ForEach-Object {
-            $name = ([uri]$_.Url).Segments[-1]
-            if(!$name) {
-                throw "Unable to detect file name for url $url"
-            }
-            $package = Join-Path $packageDir $name
-            try {
-                _fetchurl $package $_.Url
-            } catch {
-                throw $_
-            }
-
-            $actualHash = Get-FileHash -Algorithm SHA256 $package
-            if($_.Hash) {
-                if($actualHash.Hash -ne $_.Hash) {
-                    throw "Actual package hash '$($actualHash.Hash)' did not match expected value"
+        try {
+            $global:_CurrentPackageRelativeDir = Join-Path $formula.Name $formula.Version
+            if(Test-Path $packageDir) {
+                if($Force) {
+                    Write-Verbose "Cleaning target..."
+                    Remove-Item -rec -for $packageDir
+                } else {
+                    throw "Destination already exists '$packageDir', use -Force to force install."
                 }
-            } else {
-                Write-Warning "Package '$name' does not have a recorded hash. One should be added to the formula!"
-                Write-Warning "The hash of this download is: $($actualHash.Hash)"
             }
 
-            # Unpack the package
-            Unpack-Package $package
+            Unpack-Formula $formula $packageDir
+
+            Write-InstallAction "installing package..."
+            Invoke-FormulaEvent -Event "install" $formula
+
+            # Serialize the formula and save it
+            $formula | Export-CliXml (Join-Path $packageDir ".acqformula.xml")
+        } finally {
+            $global:_CurrentPackageRelativeDir = ""
         }
-
-        # Run actions
-        $installEvent = $formula.Events["install"]
-        if($installEvent -and $installEvent.Actions -and ($installEvent.Actions.Length -gt 0)) {
-            $installEvent.Actions | ForEach-Object {
-                Invoke-Action $_
-            }
-        }
-
-        # Serialize the formula and save it
-        $formula | Export-CliXml (Join-Path $packageDir ".acqformula.xml")
-
-        del variable:\_CurrentPackageRelativeDir
     }
     catch {
         Write-Error $_
@@ -101,3 +78,47 @@ function Invoke-Formula($formula, [switch]$Force) {
         throw "Installation Failed"
     }
 }
+
+function Unpack-Formula($formula, $packageDir) {
+    New-Item -Type Directory $packageDir | Out-Null
+
+    # Fetch the Packages
+    $formula.Packages | ForEach-Object {
+        $name = ([uri]$_.Url).Segments[-1]
+        if(!$name) {
+            throw "Unable to detect file name for url $url"
+        }
+        $package = Join-Path $packageDir $name
+        try {
+            Write-InstallAction "downloading package $($_.Url)"
+            _fetchurl $package $_.Url
+        } catch {
+            throw $_
+        }
+
+        $actualHash = Get-FileHash -Algorithm SHA256 $package
+        if($_.Hash) {
+            if($actualHash.Hash -ne $_.Hash) {
+                throw "Actual package hash '$($actualHash.Hash)' did not match expected value"
+            }
+        } else {
+            Write-Warning "Package '$name' does not have a recorded hash. One should be added to the formula!"
+            Write-Warning "The hash of this download is: $($actualHash.Hash)"
+        }
+
+        # Unpack the package
+        Unpack-Package $package
+    }
+}
+
+function Invoke-FormulaEvent($Event, $formula) {
+    
+    # Run actions
+    $event = $formula.Events[$Event]
+    if($event -and $event.Actions -and ($event.Actions.Length -gt 0)) {
+        $event.Actions | ForEach-Object {
+            Invoke-Action $_
+        }
+    }
+}
+
